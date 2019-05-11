@@ -144,7 +144,7 @@ void CudaMassOperator::Mult(const CudaVector &x, CudaVector &y) const
        distX.SetSize(x.Size());
      }
      distX.SetSubVectorCopy(x, ess_tdofs, ess_tdofs_count);
-     massOperator->Mult(x, y);
+     massOperator->Mult(distX, y);
    } else {
      massOperator->Mult(x, y);
    }
