@@ -81,9 +81,13 @@ public:
    /// Operator application.
    void Mult(const CudaVector & x, CudaVector & y) const
    {
-      P.Mult(x, Px);
-      A.Mult(Px, APx);
-      Rt.MultTranspose(APx, y);
+     if (rconfig::Get().IAmAlone()) {
+       A.Mult(x, y);
+     } else {
+       P.Mult(x, Px);
+       A.Mult(Px, APx);
+       Rt.MultTranspose(APx, y);
+     }
    }
    /// Application of the transpose.
    void MultTranspose(const CudaVector & x, CudaVector & y) const
