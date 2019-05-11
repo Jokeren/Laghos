@@ -22,7 +22,7 @@ MPI_INCFLAGS = -I$(MPI_HOME)/include
 
 NVCC_CXXFLAGS = -x=cu -std=c++11 $(NV_ARCH) -m64 --restrict -lineinfo
 NVCC_LIBS = -Wl,-rpath -Wl,$(CUDA_DIR)/lib64 -L$(CUDA_DIR)/lib64 \
-            -lcuda -lcudart -lcudadevrt -lnvToolsExt
+            -lcuda -lcudart -lcudadevrt -lnvToolsExt -lcublas
 
 define LAGHOS_HELP_MSG
 
@@ -140,6 +140,7 @@ SOURCE_FILES = laghos.cpp laghos_assembly.cpp laghos_solver.cpp \
 	cuda/kernels/blas/vector_min.cpp \
 	cuda/kernels/blas/vector_set_subvector.cpp \
 	cuda/kernels/blas/vector_set_subvector_const.cpp \
+	cuda/kernels/blas/vector_set_subvector_copy_const.cpp \
 	cuda/kernels/blas/vector_vec_mul.cpp \
 	cuda/kernels/blas/vector_neg.cpp \
 	cuda/fem/bilinearform.cpp \

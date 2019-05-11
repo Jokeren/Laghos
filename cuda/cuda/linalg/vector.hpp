@@ -56,6 +56,7 @@ public:
    void Neg();
    CudaVector* GetRange(const size_t, const size_t) const;
    void SetSubVector(const CudaArray<int> &, const double, const int);
+   void SetSubVectorCopy(const CudaVector &x, const CudaArray<int> &ess_tdofs, const int N);
    double Min() const;
    ~CudaVector();
 };

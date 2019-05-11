@@ -13,6 +13,9 @@
 // the planning and preparation of a capable exascale ecosystem, including
 // software, applications, hardware, advanced system engineering and early
 // testbed platforms, in support of the nation's exascale computing imperative.
+#include <cstdio>
+#include <cublas.h>
+#include <cublas_v2.h>
 #include "../cuda.hpp"
 
 // *****************************************************************************
@@ -36,7 +39,7 @@ __global__ void cuKernelDot(const size_t N, double *gdsr,
       if (tid >= workers) { continue; }
       if (rid >= N) { continue; }
       const size_t dualTid = tid + workers;
-      if (dualTid >= N) { continue; }
+      if (dualTid >= N ) { continue; }
       const size_t rdd = bbd+dualTid;
       if (rdd >= N) { continue; }
       if (dualTid >= blockDim.x) { continue; }
@@ -54,7 +57,7 @@ double cuVectorDot(const size_t N, const double *x, const double *y)
    const size_t dot_sz = (N%tpb)==0? (N/tpb) : (1+N/tpb);
    const size_t bytes = dot_sz*sizeof(double);
    static double *h_dot = NULL;
-   if (!h_dot) { h_dot = (double*)calloc(dot_sz,sizeof(double)); }
+   if (!h_dot) { cuMemHostAlloc((void**)&h_dot, dot_sz * sizeof(double), CU_MEMHOSTALLOC_PORTABLE); }
    static CUdeviceptr gdsr = (CUdeviceptr) NULL;
    if (!gdsr) { cuMemAlloc(&gdsr,bytes); }
    cuKernelDot<<<gridSize,blockSize>>>(N, (double*)gdsr, x, y);
@@ -64,11 +67,56 @@ double cuVectorDot(const size_t N, const double *x, const double *y)
    return dot;
 }
 
+//// *****************************************************************************
+//__global__ void cuKernelDot(const size_t N, double *gdsr,
+//                            const double *x, const double *y)
+//{
+//   __shared__ double s_dot[CUDA_BLOCKSIZE];
+//   const size_t n = blockDim.x*blockIdx.x + threadIdx.x;
+//   const size_t tid = threadIdx.x;
+//   s_dot[tid] = 0.0;
+//   if (n>=N) { return; }
+//   const size_t bid = blockIdx.x;
+//   const size_t bbd = bid*blockDim.x;
+//   const size_t rid = bbd+tid;
+//   s_dot[tid] = x[n] * y[n];
+//   for (size_t workers=blockDim.x>>1; workers>0; workers>>=1)
+//   {
+//      __syncthreads();
+//      //if (tid >= workers) { continue; }
+//      //if (rid >= N) { continue; }
+//      const size_t dualTid = tid + workers;
+//      if (dualTid >= N) { continue; }
+//      //const size_t rdd = bbd+dualTid;
+//      //if (rdd >= N) { continue; }
+//      if (dualTid >= blockDim.x) { continue; }
+//      s_dot[tid] += s_dot[dualTid];
+//   }
+//   __syncthreads();
+//   if (tid==0) { atomicAdd(gdsr, s_dot[0]); }
+//}
+//
+//// *****************************************************************************
+//double cuVectorDot(const size_t N, const double *x, const double *y)
+//{
+//   const size_t tpb = CUDA_BLOCKSIZE;
+//   const size_t blockSize = CUDA_BLOCKSIZE;
+//   const size_t gridSize = (N+blockSize-1)/blockSize;
+//   const size_t bytes = sizeof(double);
+//   double h_dot = 0.0;
+//   static CUdeviceptr gdsr = (CUdeviceptr) NULL;
+//   if (!gdsr) { cuMemAlloc(&gdsr, bytes); }
+//   else { cuMemsetD8(gdsr, 0, bytes); }
+//   cuKernelDot<<<gridSize,blockSize>>>(N, (double*)gdsr, x, y);
+//   cuMemcpy((CUdeviceptr)&h_dot,(CUdeviceptr)gdsr,bytes);
+//   return h_dot;
+//}
+
 
 // *****************************************************************************
 double vector_dot(const int N,
                   const double* __restrict x,
                   const double* __restrict y)
 {
-   return cuVectorDot(N, x, y);
+  return cuVectorDot(N, x, y);
 }

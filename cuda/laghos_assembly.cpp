@@ -127,12 +127,34 @@ void CudaMassOperator::EliminateRHS(CudaVector &b)
 // *************************************************************************
 void CudaMassOperator::Mult(const CudaVector &x, CudaVector &y) const
 {
-   distX = x;
+   // V1
+   //if (ess_tdofs_count)
+   //{
+   //  distX = x;
+   //  distX.SetSubVector(ess_tdofs, 0.0, ess_tdofs_count);
+   //  massOperator->Mult(x, y);
+   //} else {
+   //  massOperator->Mult(x, y);
+   //}
+
+   // V2
    if (ess_tdofs_count)
    {
-      distX.SetSubVector(ess_tdofs, 0.0, ess_tdofs_count);
+     if (distX.ptr() == NULL) {
+       distX.SetSize(x.Size());
+     }
+     distX.SetSubVectorCopy(x, ess_tdofs, ess_tdofs_count);
+     massOperator->Mult(x, y);
+   } else {
+     massOperator->Mult(x, y);
    }
-   massOperator->Mult(distX, y);
+   
+   ////V0
+   //distX = x;
+   //if (ess_tdofs_count) {
+   //  distX.SetSubVector(ess_tdofs, 0.0, ess_tdofs_count);
+   //}
+   //massOperator->Mult(x, y);
    if (ess_tdofs_count)
    {
       y.SetSubVector(ess_tdofs, 0.0, ess_tdofs_count);

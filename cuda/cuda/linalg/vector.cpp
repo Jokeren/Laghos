@@ -187,6 +187,13 @@ void CudaVector::SetSubVector(const CudaArray<int> &ess_tdofs,
    vector_set_subvector_const(N, value, data, ess_tdofs.ptr());
 }
 
+void CudaVector::SetSubVectorCopy(const CudaVector &x,
+                                  const CudaArray<int> &ess_tdofs,
+                                  const int ess_tdofs_count)
+{
+   vector_set_subvector_copy_const(x.Size(), ess_tdofs_count, data, x.ptr(), ess_tdofs.ptr());
+}
+
 
 // ***************************************************************************
 double CudaVector::Min() const

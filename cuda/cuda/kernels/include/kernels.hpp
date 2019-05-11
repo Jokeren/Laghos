@@ -41,6 +41,8 @@ void vector_get_subvector(const int, double* restrict, const double* restrict,
                           const int* restrict);
 void vector_set_subvector_const(const int, const double, double* restrict,
                                 const int* restrict);
+void vector_set_subvector_copy_const(const int, const int, double* restrict, double* restrict,
+                                     const int* restrict);
 double vector_dot(const int, const double* restrict, const double* restrict);
 double vector_min(const int, const double* restrict);
 
