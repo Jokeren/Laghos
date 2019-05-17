@@ -14,7 +14,7 @@
 # software, applications, hardware, advanced system engineering and early
 # testbed platforms, in support of the nation's exascale computing imperative.
 
-RAJA_DIR ?= /usr/local/raja
+RAJA_DIR ?= ../../raja-install
 RAJA_INCFLAGS = -I$(RAJA_DIR)/include
 RAJA_LIBS = -fopenmp $(RAJA_DIR)/lib/libRAJA.a
 RAJA_CXXFLAGS = --expt-extended-lambda -Xcompiler -fopenmp
@@ -25,7 +25,7 @@ CUDA_DIR ?= /usr/local/cuda
 MPI_HOME ?= /usr/local/mpi
 MPI_INCFLAGS = -I$(MPI_HOME)/include
 
-NVCC_CXXFLAGS = -x=cu -std=c++11 -m64 --restrict -Xcompiler -Wall $(NV_ARCH)
+NVCC_CXXFLAGS = -x=cu -std=c++11 -m64 --restrict $(NV_ARCH)
 NVCC_LIBS = -Wl,-rpath -Wl,$(CUDA_DIR)/lib64 -L$(CUDA_DIR)/lib64 \
             -lcuda -lcudart -lcudadevrt -lnvToolsExt
 
@@ -99,15 +99,8 @@ CFLAGS = -O3
 LDFLAGS =
 
 OPTIM_OPTS = -O3
-DEBUG_OPTS = -g -Wall
-LAGHOS_DEBUG = $(MFEM_DEBUG)
-ifneq ($(LAGHOS_DEBUG),$(MFEM_DEBUG))
-   ifeq ($(LAGHOS_DEBUG),YES)
-      CXXFLAGS = $(DEBUG_OPTS)
-   else
-      CXXFLAGS = $(OPTIM_OPTS)
-   endif
-endif
+DEBUG_OPTS = -O3 -lineinfo -g
+CXXFLAGS = $(DEBUG_OPTS)
 
 LAGHOS_FLAGS = $(CPPFLAGS) $(CXXFLAGS) $(MFEM_INCFLAGS) \
  $(MPI_INCFLAGS) $(RAJA_INCFLAGS) $(RAJA_CXXFLAGS) \
