@@ -20,8 +20,8 @@
 #define CUDA_BLOCK_SIZE 256
 
 #define cu_device __device__
-#define cu_exec RAJA::cuda_exec<CUDA_BLOCK_SIZE>
-#define cu_reduce RAJA::cuda_reduce<CUDA_BLOCK_SIZE>
+#define cu_exec RAJA::cuda_exec<CUDA_BLOCK_SIZE, true>
+#define cu_reduce RAJA::cuda_reduce<CUDA_BLOCK_SIZE, true>
 
 #define sq_device __host__
 #define sq_exec RAJA::seq_exec
