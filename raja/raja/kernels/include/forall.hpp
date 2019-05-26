@@ -21,6 +21,7 @@
 
 #define cu_device __device__
 #define cu_exec RAJA::cuda_exec<CUDA_BLOCK_SIZE, true>
+#define cu_exec_128 RAJA::cuda_exec<128, true>
 #define cu_reduce RAJA::cuda_reduce<CUDA_BLOCK_SIZE, true>
 
 #define sq_device __host__
@@ -30,12 +31,12 @@
 #define ReduceDecl(type,var,ini) \
   RAJA::Reduce ## type<sq_reduce, RAJA::Real_type> var(ini);
 #define ReduceForall(i,max,body) \
-  RAJA::forall<sq_exec>(0,max,[=]sq_device(RAJA::Index_type i) {body});
+  RAJA::forall<sq_exec>(RAJA::RangeSegment(0,max), [=]sq_device(RAJA::Index_type i) {body});
 
 #define forall(i,max,body)                                              \
    if (mfem::rconfig::Get().Cuda())                                     \
-      RAJA::forall<cu_exec>(0,max,[=]cu_device(RAJA::Index_type i) {body}); \
+      RAJA::forall<cu_exec>(RAJA::RangeSegment(0,max), [=]cu_device(RAJA::Index_type i) {body}); \
    else                                                                 \
-      RAJA::forall<sq_exec>(0,max,[=]sq_device(RAJA::Index_type i) {body});
+      RAJA::forall<sq_exec>(RAJA::RangeSegment(0,max), [=]sq_device(RAJA::Index_type i) {body});
 
 #endif // LAGHOS_RAJA_KERNELS_FORALL
