@@ -28,74 +28,149 @@ void rMassMultAdd2D(
    const double* restrict solIn,
    double* restrict solOut)
 {
-
-   forall(e,numElements,
-   {
-      double sol_xy[NUM_QUAD_1D][NUM_QUAD_1D];
-      for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
-      {
-         for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
-         {
-            sol_xy[qy][qx] = 0.0;
-         }
-      }
-      for (int dy = 0; dy < NUM_DOFS_1D; ++dy)
-      {
-         double sol_x[NUM_QUAD_1D];
-         for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
-         {
-            sol_x[qy] = 0.0;
-         }
-         for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
-         {
-            const double s = solIn[ijkN(dx,dy,e,NUM_DOFS_1D)];
-            for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
-            {
-               sol_x[qx] += dofToQuad[ijN(qx,dx,NUM_QUAD_1D)]* s;
-            }
-         }
-         for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
-         {
-            const double d2q = dofToQuad[ijN(qy,dy,NUM_QUAD_1D)];
-            for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
-            {
-               sol_xy[qy][qx] += d2q * sol_x[qx];
-            }
-         }
-      }
-      for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
-      {
-         for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
-         {
-            sol_xy[qy][qx] *= oper[ijkN(qx,qy,e,NUM_QUAD_1D)];
-         }
-      }
-      for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
-      {
-         double sol_x[NUM_DOFS_1D];
-         for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
-         {
-            sol_x[dx] = 0.0;
-         }
-         for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
-         {
-            const double s = sol_xy[qy][qx];
-            for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
-            {
-               sol_x[dx] += quadToDof[ijN(dx,qx,NUM_DOFS_1D)] * s;
-            }
-         }
-         for (int dy = 0; dy < NUM_DOFS_1D; ++dy)
-         {
-            const double q2d = quadToDof[ijN(dy,qy,NUM_DOFS_1D)];
-            for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
-            {
-               solOut[ijkN(dx,dy,e,NUM_DOFS_1D)] += q2d * sol_x[dx];
-            }
-         }
-      }
+  const int start = 0;
+   if (mfem::rconfig::Get().Cuda()) {
+      RAJA::forall<cu_exec>(RAJA::TypedRangeSegment<int>(start,numElements),[=]cu_device(RAJA::Index_type e) {
+        double sol_xy[NUM_QUAD_1D][NUM_QUAD_1D];
+        double sol_xy2[NUM_QUAD_1D][NUM_QUAD_1D];
+        for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+        {
+           for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+           {
+              sol_xy[qy][qx] = 0.0;
+              sol_xy2[qy][qx] = 0.0;
+           }
+        }
+        for (int dy = 0; dy < NUM_DOFS_1D; ++dy)
+        {
+           double sol_x[NUM_QUAD_1D];
+           for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+           {
+              sol_x[qy] = 0.0;
+           }
+           for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
+           {
+              const double s = solIn[ijkN(dx,dy,e,NUM_DOFS_1D)];
+              for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+              {
+                 sol_x[qx] += dofToQuad[ijN(qx,dx,NUM_QUAD_1D)]* s;
+              }
+           }
+           for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+           {
+              const double d2q = dofToQuad[ijN(qy,dy,NUM_QUAD_1D)];
+              for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+              {
+                 sol_xy[qy][qx] += d2q * sol_x[qx];
+              }
+           }
+        }
+        for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+        {
+           for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+           {
+              sol_xy[qy][qx] *= oper[ijkN(qx,qy,e,NUM_QUAD_1D)];
+           }
+        }
+        for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+        {
+           double sol_x[NUM_DOFS_1D];
+           for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
+           {
+              sol_x[dx] = 0.0;
+           }
+           for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+           {
+              const double s = sol_xy[qy][qx];
+              for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
+              {
+                 sol_x[dx] += quadToDof[ijN(dx,qx,NUM_DOFS_1D)] * s;
+              }
+           }
+           for (int dy = 0; dy < NUM_DOFS_1D; ++dy)
+           {
+              const double q2d = quadToDof[ijN(dy,qy,NUM_DOFS_1D)];
+              for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
+              {
+                 sol_xy2[dx][dy] += q2d * sol_x[dx];
+              }
+           }
+        }
+        for (int dy = 0; dy < NUM_DOFS_1D; ++dy)
+        {
+           for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
+           {
+              solOut[ijkN(dx,dy,e,NUM_DOFS_1D)] = sol_xy2[dx][dy];
+           }
+        }
+      });
+   } else {
+      RAJA::forall<sq_exec>(RAJA::RangeSegment(0,numElements),[=]cu_device(RAJA::Index_type e) {
+        double sol_xy[NUM_QUAD_1D][NUM_QUAD_1D];
+        for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+        {
+           for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+           {
+              sol_xy[qy][qx] = 0.0;
+           }
+        }
+        for (int dy = 0; dy < NUM_DOFS_1D; ++dy)
+        {
+           double sol_x[NUM_QUAD_1D];
+           for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+           {
+              sol_x[qy] = 0.0;
+           }
+           for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
+           {
+              const double s = solIn[ijkN(dx,dy,e,NUM_DOFS_1D)];
+              for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+              {
+                 sol_x[qx] += dofToQuad[ijN(qx,dx,NUM_QUAD_1D)]* s;
+              }
+           }
+           for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+           {
+              const double d2q = dofToQuad[ijN(qy,dy,NUM_QUAD_1D)];
+              for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+              {
+                 sol_xy[qy][qx] += d2q * sol_x[qx];
+              }
+           }
+        }
+        for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+        {
+           for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+           {
+              sol_xy[qy][qx] *= oper[ijkN(qx,qy,e,NUM_QUAD_1D)];
+           }
+        }
+        for (int qy = 0; qy < NUM_QUAD_1D; ++qy)
+        {
+           double sol_x[NUM_DOFS_1D];
+           for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
+           {
+              sol_x[dx] = 0.0;
+           }
+           for (int qx = 0; qx < NUM_QUAD_1D; ++qx)
+           {
+              const double s = sol_xy[qy][qx];
+              for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
+              {
+                 sol_x[dx] += quadToDof[ijN(dx,qx,NUM_DOFS_1D)] * s;
+              }
+           }
+           for (int dy = 0; dy < NUM_DOFS_1D; ++dy)
+           {
+              const double q2d = quadToDof[ijN(dy,qy,NUM_DOFS_1D)];
+              for (int dx = 0; dx < NUM_DOFS_1D; ++dx)
+              {
+                 solOut[ijkN(dx,dy,e,NUM_DOFS_1D)] += q2d * sol_x[dx];
+              }
+           }
+        }
+      });
    }
-         );
 }
 
 // *****************************************************************************
