@@ -269,7 +269,7 @@ metis:
 		tar zxvf metis-$(METIS_VER).tar.gz &&\
 		ln -s metis-$(METIS_VER) $(METIS_DIR) &&\
 		cd $(METIS_DIR) &&\
-		make -j $(NPROC) OPTFLAGS="-O2";\
+		make -j $(NPROC) CC=gcc OPTFLAGS="-O2";\
 		else echo "Using existing ../$(METIS_DIR)"; fi)
 
 MFEM_GIT = https://github.com/mfem/mfem.git
