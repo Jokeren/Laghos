@@ -55,7 +55,7 @@ make style
 
 endef
 
-NPROC = $(shell getconf _NPROCESSORS_ONLN)
+NPROC ?= $(shell getconf _NPROCESSORS_ONLN)
 GOALS = help clean distclean style setup mfem metis hypre
 
 # Default installation location
